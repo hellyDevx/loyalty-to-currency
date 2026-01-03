@@ -3074,7 +3074,7 @@ export type DeliveryInputVariables = Exact<{ [key: string]: never; }>;
 
 export type DeliveryInput = { __typename?: 'Input', cart: { __typename?: 'Cart', deliveryGroups: Array<{ __typename?: 'CartDeliveryGroup', id: string }> }, discount: { __typename?: 'Discount', discountClasses: Array<DiscountClass> } };
 
-export type CartInputVariables = Exact<{ [key: string]: never; }>;
+export type InputVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CartInput = { __typename?: 'Input', cart: { __typename?: 'Cart', lines: Array<{ __typename?: 'CartLine', id: string, cost: { __typename?: 'CartLineCost', subtotalAmount: { __typename?: 'MoneyV2', amount: any } } }> }, discount: { __typename?: 'Discount', discountClasses: Array<DiscountClass> } };
+export type Input = { __typename?: 'Input', cart: { __typename?: 'Cart', buyerIdentity?: { __typename?: 'BuyerIdentity', customer?: { __typename?: 'Customer', id: string, metafield?: { __typename?: 'Metafield', value: string, type: string } | null } | null } | null, lines: Array<{ __typename?: 'CartLine', id: string, quantity: number, cost: { __typename?: 'CartLineCost', amountPerQuantity: { __typename?: 'MoneyV2', amount: any }, subtotalAmount: { __typename?: 'MoneyV2', amount: any } }, merchandise: { __typename?: 'CustomProduct' } | { __typename?: 'ProductVariant', id: string, title?: string | null, product: { __typename?: 'Product', id: string, title: string, productType?: string | null, isGiftCard: boolean } } }> } };

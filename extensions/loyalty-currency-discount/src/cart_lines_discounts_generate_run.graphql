@@ -1,15 +1,37 @@
-query CartInput {
+query Input {
   cart {
+    buyerIdentity {
+      customer {
+        id
+        metafield(key: "points", namespace: "loyalty") {
+          value
+          type
+        }
+      }
+    }
     lines {
       id
+      quantity
       cost {
+        amountPerQuantity {
+          amount
+        }
         subtotalAmount {
           amount
         }
       }
+      merchandise {
+        ... on ProductVariant {
+          id
+          title
+          product {
+            id
+            title
+            productType
+            isGiftCard
+          }
+        }
+      }
     }
-  }
-  discount {
-    discountClasses
   }
 }

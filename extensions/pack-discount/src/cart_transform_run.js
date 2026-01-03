@@ -66,18 +66,7 @@ export function cartTransformRun(input) {
   const discountedUnit = basePriceForDiscount * (1 - calculatedPercent / 100);
   const discountedUnitStr = discountedUnit.toFixed(2);
 
-      ops.push({
-        lineUpdate: {
-          cartLineId: l.id,
-          price: {
-            adjustment: {
-              fixedPricePerUnit: {
-                amount: discountedUnitStr,
-              },
-            },
-          },
-        },
-      });
+      ops.push();
     } catch (e) {
       // skip line on error
       continue;

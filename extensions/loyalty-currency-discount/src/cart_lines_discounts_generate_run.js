@@ -34,6 +34,19 @@ export function cartLinesDiscountsGenerateRun(input) {
     return {operations: []};
   }
 
+  // Check cart attribute set by the cart drawer checkbox (e.g. key: "apply_loyalty").
+  // Only apply the loyalty discount when the storefront explicitly enables it.
+  try {
+    const attrA = input.cart.attributeApplyLoyalty;
+    const attrB = input.cart.attributeLoyaltyApply;
+    const val = (attrA && attrA.value) || (attrB && attrB.value) || '';
+    const applyValue = String(val).toLowerCase();
+    const applyLoyalty = /^(true|1|yes)$/i.test(applyValue);
+    if (!applyLoyalty) return {operations: []};
+  } catch (e) {
+    return {operations: []};
+  }
+
   // Read customer points from metafield (value is stored as a string)
   const mf = buyer.customer.metafield;
   const customerPoints = mf && mf.value ? Math.floor(Number(mf.value)) : 0;

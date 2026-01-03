@@ -17,13 +17,17 @@ import {
 export function cartLinesDiscountsGenerateRun(input) {
   // Basic checks
   if (!input.cart.lines || !input.cart.lines.length) {
+    console.info('[LoyaltyFunc] no cart lines — skipping');
     return {operations: []};
   }
 
   const hasProductDiscountClass = input.discount.discountClasses.includes(
     DiscountClass.Product,
   );
-
+  if (!hasProductDiscountClass) {
+    console.info('[LoyaltyFunc] discount does not include Product class — skipping');
+    return {operations: []};
+  }
   if (!hasProductDiscountClass) {
     return {operations: []};
   }
@@ -31,6 +35,7 @@ export function cartLinesDiscountsGenerateRun(input) {
   // Ensure customer is logged in and has a customer object
   const buyer = input.cart.buyerIdentity;
   if (!buyer || !buyer.isAuthenticated || !buyer.customer) {
+    console.info('[LoyaltyFunc] buyer not authenticated or missing customer object — skipping');
     return {operations: []};
   }
 
@@ -51,6 +56,7 @@ export function cartLinesDiscountsGenerateRun(input) {
   const mf = buyer.customer.metafield;
   const customerPoints = mf && mf.value ? Math.floor(Number(mf.value)) : 0;
   if (!Number.isFinite(customerPoints) || customerPoints < 100) {
+    console.info('[LoyaltyFunc] insufficient or invalid customer points:', customerPoints);
     return {operations: []};
   }
 
@@ -65,6 +71,7 @@ export function cartLinesDiscountsGenerateRun(input) {
   });
 
   if (!eligibleLines.length) {
+    console.info('[LoyaltyFunc] no eligible (non-gift-card) lines — skipping');
     return {operations: []};
   }
 
@@ -80,8 +87,11 @@ export function cartLinesDiscountsGenerateRun(input) {
     return sum + sub;
   }, 0);
 
+  console.info('[LoyaltyFunc] eligible subtotal (cents):', eligibleSubtotalCents, 'eligibleLines:', eligibleLines.length);
+
   // Eligibility: subtotal (excluding gift cards) >= 1000
   if (eligibleSubtotalCents < 1000 * 100) {
+    console.info('[LoyaltyFunc] eligible subtotal less than required threshold — skipping');
     return {operations: []};
   }
 
@@ -89,13 +99,18 @@ export function cartLinesDiscountsGenerateRun(input) {
   const thirtyPercentCents = Math.floor((eligibleSubtotalCents * 30) / 100);
   const maxRedeemableCents = Math.min(customerPoints * 100, thirtyPercentCents);
 
+  console.info('[LoyaltyFunc] customerPoints (cents):', customerPoints * 100, '30% of subtotal (cents):', thirtyPercentCents, 'maxRedeemableCents:', maxRedeemableCents);
+
   // Round down to nearest block of 50 (points -> currency is 1:1)
   const blockCents = 50 * 100;
   const redeemableBlocks = Math.floor(maxRedeemableCents / blockCents);
   if (redeemableBlocks <= 0) {
+    console.info('[LoyaltyFunc] redeemableBlocks <= 0 — no redeemable amount after rounding');
     return {operations: []};
   }
   const redeemableCents = redeemableBlocks * blockCents;
+
+  console.info('[LoyaltyFunc] redeemableCents:', redeemableCents, 'redeemableBlocks:', redeemableBlocks);
 
   // Distribute redeemableCents proportionally across eligible lines (largest remainder)
   const exactAllocations = eligibleLines.map((line) => {
@@ -139,6 +154,13 @@ export function cartLinesDiscountsGenerateRun(input) {
   // As a last resort, if remainder still > 0 (shouldn't happen), reduce total redeemable
   const finalAssignedSum = allocations.reduce((s, a) => s + a.assigned, 0);
 
+  console.info('[LoyaltyFunc] finalAssignedSum (cents):', finalAssignedSum, 'expected redeemableCents:', redeemableCents, 'remainder (should be 0):', redeemableCents - finalAssignedSum);
+
+  // log allocations summary
+  allocations.forEach((a) => {
+    console.debug('[LoyaltyFunc] allocation lineId:', a.id, 'assigned(cents):', a.assigned, 'lineSubtotal(cents):', a.lineSubtotal);
+  });
+
   // Build productDiscountsAdd candidates per eligible line
   const candidates = allocations.map((a) => ({
     message: 'LOYALTY REDEMPTION',
@@ -155,6 +177,8 @@ export function cartLinesDiscountsGenerateRun(input) {
       },
     },
   }));
+
+  console.info('[LoyaltyFunc] candidates count:', candidates.length);
 
   return {
     operations: [
